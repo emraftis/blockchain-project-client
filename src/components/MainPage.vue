@@ -122,7 +122,7 @@ export default {
       this.noResults = false;
       this.isLoading = true;
       try {
-        const res = await fetch(`http://localhost:3000${this.apiString}`);
+        const res = await fetch(`${this.apiString}`);
         this.transactions = await res.json();
         if (this.transactions.length < 1) {
           this.noResults = true;
