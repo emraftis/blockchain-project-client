@@ -1,16 +1,18 @@
 <template>
-  <h1>ETH Gas Wallet Tracker</h1>
-  <div class="instructions">
+<div class="background"></div>
+  <div class="landing-page">
+    <h1>Ethereum Gas Tracker</h1>
+    <div class="instructions">
     <h2>User Guide:</h2>
     <ul class="user-guide-list">
       <li>This application shows accumulated Gas Fees for a wallet address.</li>
       <li>Please enter the year and a <span class="strong-font">public, non-custodial</span> wallet address that you want to search.</li>
       <li>Transactions that show a value of '0 ETH' are usually ERC20 token transactions.</li>
-      <li>You can find out more about these '0 ETH Transactions' by changing the Report Type.</li>
-      <li>Click the bold transaction hash to see this transaction on Etherscan.</li>
-      <li>Please keep in mind this is a free service and it will take 10-20 seconds to load each wallet.</li>
-      <li>Want to test it? Try the <a class="underline-font" href="https://www.coindesk.com/markets/2021/08/10/cross-chain-defi-site-poly-network-hacked-hundreds-of-millions-potentially-lost/">Poly Network Hacker's ETH address...</a> 0xC8a65Fadf0e0dDAf421F28FEAb69Bf6E2E589963</li>
+      <li>Find out more about the '0 ETH Transactions' by changing the Report Type or clicking on the Tx Hash link.</li>
+      <li>Want to test it? Try the <a target="_blank" href="https://www.coindesk.com/markets/2021/08/10/cross-chain-defi-site-poly-network-hacked-hundreds-of-millions-potentially-lost/">PolyNetwork Hacker's wallet:</a> 0xC8a65Fadf0e0dDAf421F28FEAb69Bf6E2E589963</li>
+      <button class="test-button" @click="test">Test It</button>
     </ul>
+    </div>
   </div>
 
 
@@ -38,9 +40,15 @@
     </div>
     
     <div class="button-block">
-      <button class="search-button" @click="fetchWalletTxns">Search</button>
+      <button class="search-button" @click="fetchWalletTxns()">Search</button>
     </div>
     
+    <div class="summary-container" v-if="transactions.length > 0 && !isLoading">
+      <ul>
+        <li v-if="report==='txlist'">Number of Transactions Found: <span class="strong-font">{{ transactions.length }}</span></li>
+        <li v-if="report==='tokentx'">Number of ERC20 Transactions Sent in {{ year }}: {{ transactions.length }}</li>
+      </ul>
+    </div>
   </div>
 
 
@@ -54,41 +62,57 @@
     <base-spinner></base-spinner>
   </div>
 
-  <div class="summary-container" v-if="transactions.length > 0 && !isLoading">
-    <ul>
-      <li v-if="report==='txlist'">Number of Transactions Sent in {{ year }}: <span class="strong-font">{{ transactions.length }}</span></li>
-      <li v-if="report==='tokentx'">Number of ERC20 Transactions Sent in {{ year }}: {{ transactions.length }}</li>
-    </ul>
-  </div>
 
   <div class="list-container" v-if="!isLoading">
     <div v-if="noResults">
       <h2>No results!</h2>
     </div>
-    
     <ul>
       <li v-for="transaction in transactions" :key="transaction">
-        <p>Date: {{ getFullDate(transaction.formattedDate) }} | Nonce: #{{ transaction.nonce }}</p>
+        <p class="txn-list-header">Date: {{ getFullDate(transaction.formattedDate) }} <span class="divider">|</span> <i class="fab fa-ethereum"></i> 1.00 = {{ formatUSD(transaction.data.amount) }} <span class="divider">|</span> Nonce: #{{ transaction.nonce }} </p>
         <div class="txn-card">
           <div class="card-heading">
-              <h2 class="card-header">Tx Hash: <a class="strong-font" :href="linkToEtherscanTx(transaction.hash)">{{ transaction.hash }}</a></h2>
+              <h2 class="card-header">Tx Hash: <a class="strong-font" target="_blank" :href="linkToEtherscanTx(transaction.hash)">{{ transaction.hash }}</a></h2>
           </div>
-
           <ul>
-            <li>From: <a class="strong-font" :href="linkToEtherscanAc(transaction.from)">{{ transaction.from }}</a></li>
-            <li>To: <a class="strong-font" :href="linkToEtherscanAc(transaction.to)">{{ transaction.to }}</a></li>
-            <li></li>
-            <li></li>
+            <li>From: <a class="strong-font" target="_blank" :href="linkToEtherscanAc(transaction.from)">{{ transaction.from }}</a></li>
+            <li>To: <a class="strong-font" target="_blank" :href="linkToEtherscanAc(transaction.to)">{{ transaction.to }}</a></li>
             <li v-if="transaction.tokenSymbol">Token(s): {{ transaction.value / (10 ** transaction.tokenDecimal) }} x {{ transaction.tokenName }} ({{ transaction.tokenSymbol }})</li>
-            <li v-if="!transaction.tokenSymbol">Transaction value: <i class="fab fa-ethereum"></i> {{ convertGweitoETH(transaction.value) }} (USD{{ fromETHtoUSD(convertGweitoETH(transaction.value), transaction.data.amount) }})</li>
-            <li class="strong-font">Gas paid: <i class="fab fa-ethereum"></i> {{ getGasETH(transaction.gasUsed, transaction.gasPrice) }} (USD{{ fromETHtoUSD(getGasETH(transaction.gasUsed, transaction.gasPrice), transaction.data.amount) }})</li>
+            <li v-if="!transaction.tokenSymbol">Transaction value: <i class="fab fa-ethereum"></i> {{ convertGweitoETH(transaction.value) }} ( USD {{ fromETHtoUSD(convertGweitoETH(transaction.value), transaction.data.amount) }} )</li>
+            <li></li>
           </ul>
-
+          <div class="gas-module">
+            <h3 class="gas-heading">Gas Paid:</h3>
+            <p><i class="fab fa-ethereum"></i> {{ getGasETH(transaction.gasUsed, transaction.gasPrice) }}</p>
+            <p>USD {{ fromETHtoUSD(getGasETH(transaction.gasUsed, transaction.gasPrice), transaction.data.amount) }}</p>
+          </div>
         </div>
       </li>
     </ul>
-
   </div>
+
+  <div class="powered-by-group">
+      <div class="powered-by">
+        <p>Blockchain Data is powered by:</p>
+        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 540 150" style="enable-background:new 0 0 1101.64 196.79;" xml:space="preserve">
+          <g id="etherscan-logo" transform="translate(-219.377 -213.516)">
+            <path id="Path_8" data-name="Path 8" d="M12.333-43.9q0-6.084-4.193-6.084a6.742,6.742,0,0,0-1.727.164,12.4,12.4,0,0,1-2.22.247,2.4,2.4,0,0,1-1.809-.781,2.7,2.7,0,0,1-.74-1.932q0-2.878,3.442-2.878.082,0,1.228.082,12.29.822,11.472.822H18.6l19.747-.576q.574,0,4.261-.247,1.31-.082,2.375-.082,4.261,0,4.261,3.782,0,.658-.235,4.193-.176,2.631-.176,4.851a39.539,39.539,0,0,0,.137,4.029,34.313,34.313,0,0,1,.274,3.535q0,3.124-2.96,3.124t-2.96-4.378v-4.3q0-6.938-2.867-8.178-2.131-.908-10.98-.908a49.477,49.477,0,0,0-6.883.251q-3.524.919-3.524,5.011v8.222q0,3.289,1.459,3.782a7.91,7.91,0,0,0,1.946.164H25.8q5.109,0,5.109-3.535a20.357,20.357,0,0,0-.206-2.549,21.659,21.659,0,0,1-.206-2.8q0-3.289,2.919-3.289t2.919,3.535q0,.658-.532,5.1a56.592,56.592,0,0,0-.455,6.66q0,1.644.329,5.838.082.658.411,2.878a22.477,22.477,0,0,1,.247,2.878,2.616,2.616,0,0,1-.74,2.22,2.616,2.616,0,0,1-2.22.74q-2.878,0-2.878-3.453a24.114,24.114,0,0,1,.206-2.631,24.117,24.117,0,0,0,.206-2.631q0-3.535-4.686-3.535h-3.7q-2.384,0-2.919.822A7.5,7.5,0,0,0,19.07-22.2v5.1q0,1.315.082,3.535.082,2.713.082,3.618.082,3.289,1.315,4.111.9.576,4.275.576H36.012q4.851,0,6.66-1.439t1.809-5.385q0-1.233-.123-3.659t-.124-3.66q0-3.7,2.92-3.7,3.082,0,3.082,3.782,0,1.48-.123,4.522t-.123,4.522q0,1.151.123,3.412t.123,3.412q0,3.864-3.782,3.864-.9,0-2.878-.188-.987-.1-3.618-.1.576,0-6.413-.188T21.459-.247q-7.729,0-15.128.576a3.811,3.811,0,0,0-.74.082H5.1q-3.453,0-3.453-2.96Q1.647-5.18,4.2-5.18q.411,0,2.22.164a6.562,6.562,0,0,0,1.727.247q4.193,0,4.193-6.166ZM81.4-11.346v-5.262q.082-3.371,2.96-3.371T87.234-16.2q0,8.962-2.287,12.5-3.1,4.769-10.207,4.769-6.533,0-9.309-4.193Q63.39-6.166,63.39-13.484V-33.216q0-1.727-1.6-1.727H59.1a3.058,3.058,0,0,1-2.228-.863,2.822,2.822,0,0,1-.883-2.1,2.9,2.9,0,0,1,.863-2.055,2.619,2.619,0,0,1,1.932-.9h3.207q1.4,0,1.4-1.562v-8.469q0-3.124,3.207-3.124,2.96,0,2.96,3.124v8.8q0,1.233,1.48,1.233H80q3.124,0,3.124,2.878,0,3.042-3.371,3.042H70.708q-1.151,0-1.151,1.727v20.226q0,8.633,5.753,8.633Q81.146-4.358,81.4-11.346Zm22.857-41.672L103.924-37a22.145,22.145,0,0,1,6.02-4.316,15.932,15.932,0,0,1,6.431-1.192q7.091,0,11.38,4.029a13.875,13.875,0,0,1,4.288,10.606v13.731q0,4.851.082,5.344.329,4.111,2.138,4.111a5.954,5.954,0,0,0,1.891-.46,5.988,5.988,0,0,1,1.316-.116q3.042,0,3.042,2.8t-3.946,2.8A28.465,28.465,0,0,1,133.442.09a49.442,49.442,0,0,0-5.591-.411,24.862,24.862,0,0,0-3.289.164q-3.453.493-4.275.493a3.61,3.61,0,0,1-2.467-.863,2.771,2.771,0,0,1-.987-2.179,2.3,2.3,0,0,1,.863-1.809,3,3,0,0,1,2.014-.74,6.921,6.921,0,0,1,2.138.411,4.426,4.426,0,0,0,1.4.247q2.467,0,2.549-5.344,0-.987.164-3.864V-21.78q0-8.386-1.651-11.264-2.393-4.275-8.418-4.275-6.52,0-9.491,4.44-2.063,3.042-2.145,9.784v5.92a6.968,6.968,0,0,1-.329,1.644v1.562q0,4.686.085,5.426.423,4.029,2.451,4.029a7.122,7.122,0,0,0,1.9-.37,7.06,7.06,0,0,1,1.818-.37q2.706,0,2.706,2.626,0,2.965-3.642,2.965-1.16,0-3.478-.247a52.934,52.934,0,0,0-5.381-.329q-1.407,0-3.89.247-3.312.329-4.223.329-3.394,0-3.394-3.05,0-2.541,3.182-2.541a4.067,4.067,0,0,1,1.59.23,10,10,0,0,0,2.009.346q1.34,0,1.8-2.508A75.317,75.317,0,0,0,98-17.43V-32.147q0-12.333-.493-15.58t-2.3-3.248a9.084,9.084,0,0,0-1.727.247,9.206,9.206,0,0,1-1.809.247q-2.8,0-2.8-2.631a2.49,2.49,0,0,1,.987-1.973,3.6,3.6,0,0,1,2.384-.822q.411,0,2.8.247a32.292,32.292,0,0,0,3.371.164,14.208,14.208,0,0,0,2.055-.206,13.985,13.985,0,0,1,1.891-.206q1.891,0,1.891,2.725Zm76.874,28.78a10.017,10.017,0,0,1-.412,3.809q-.412.7-2.391.7H152.11a2.3,2.3,0,0,0-1.4.289,1.207,1.207,0,0,0-.33.951,14.89,14.89,0,0,0,3.71,10.331,11.9,11.9,0,0,0,9.234,4.133A11.85,11.85,0,0,0,169.958-6a9.025,9.025,0,0,0,3.916-5.015l.743-2.384a2.557,2.557,0,0,1,2.72-1.973q3.051,0,3.051,3.124,0,5.344-5.426,9.5A19.762,19.762,0,0,1,162.628,1.4Q154,1.4,148.9-4.4t-5.1-15.58q0-10.031,5.426-16.279a17.842,17.842,0,0,1,14.142-6.249,17.009,17.009,0,0,1,12.744,5.161,18.037,18.037,0,0,1,5.016,13.109ZM151.282-26.31q0,1.151,1.815,1.151h19.72q1.733,0,1.733-1.151a10.2,10.2,0,0,0-3.3-7.564,10.768,10.768,0,0,0-7.756-3.207,12.466,12.466,0,0,0-8.416,3.33Q151.282-30.421,151.282-26.31Zm48.345-12.455v2.26a13.356,13.356,0,0,1,11.428-6,13.345,13.345,0,0,1,9.332,3.248,10.763,10.763,0,0,1,3.577,8.345,9.123,9.123,0,0,1-1.809,5.879,5.808,5.808,0,0,1-4.769,2.261,4.7,4.7,0,0,1-3.207-1.151,3.582,3.582,0,0,1-1.315-2.8,3.292,3.292,0,0,1,.987-2.343,3.1,3.1,0,0,1,2.3-1.028,5.012,5.012,0,0,1,1.069.247,4.093,4.093,0,0,0,.493-1.809,4.955,4.955,0,0,0-2.1-4.029,8.2,8.2,0,0,0-5.221-1.644q-6.413,0-8.551,5.755-1.315,3.535-1.315,10.688v5.426q0,5.509.083,6.166.414,4.686,2.572,4.686a9.5,9.5,0,0,0,2.239-.281A7.127,7.127,0,0,1,207-5.1q2.655,0,2.655,2.591,0,2.835-3.371,2.835h-.329a36.128,36.128,0,0,1-3.741-.288,36.128,36.128,0,0,0-3.741-.288q-3.289,0-5.18.164l-4.6.411q-3.371,0-3.371-2.878,0-2.549,3.153-2.549a6.938,6.938,0,0,1,1.245.082l1.245.247a7.056,7.056,0,0,0,1.161.164q2.075,0,2.24-3.782v-4.193l-.247-18.664q-.247-4.851-2.467-4.851a10.955,10.955,0,0,0-1.809.206,10.952,10.952,0,0,1-1.809.206q-2.713,0-2.713-2.591,0-2.835,3.535-2.835a21.809,21.809,0,0,1,2.467.206,21.809,21.809,0,0,0,2.467.206,17.633,17.633,0,0,0,2.138-.206,5.265,5.265,0,0,1,1.562-.206Q199.627-41.109,199.627-38.765Zm45.251-3.742a14.463,14.463,0,0,1,9.178,2.878v-.329q0-3.042,2.631-3.042,2.713,0,2.713,2.631,0,.493-.137,2.467a20,20,0,0,0-.274,3.289,28.811,28.811,0,0,0,.206,2.878,28.811,28.811,0,0,1,.206,2.878q0,3.124-2.672,3.124a2.388,2.388,0,0,1-1.974-.668,2.388,2.388,0,0,1-.7-1.963v-2.713q-.082-2.467-2.849-4.234a11.782,11.782,0,0,0-6.484-1.768,10.255,10.255,0,0,0-6.359,1.932,5.822,5.822,0,0,0-2.56,4.81q0,5.262,7.258,6.249l4.784.658q14.021,1.891,14.021,11.593a11.744,11.744,0,0,1-4.509,9.578Q252.849,1.4,245.552,1.4a18.745,18.745,0,0,1-11.8-3.864V-.9q0,2.96-2.8,2.96-3.042,0-3.042-3.371a42.123,42.123,0,0,0,.493-4.275,16.26,16.26,0,0,0,.164-2.3,19.771,19.771,0,0,0-.329-3.7,15.443,15.443,0,0,1-.329-2.713q0-2.878,2.631-2.878,1.727,0,2.179.822A12.664,12.664,0,0,1,233.254-12q.082,3.535,3.7,5.755a17.357,17.357,0,0,0,9.208,2.22,10.492,10.492,0,0,0,6.66-2.055,6.315,6.315,0,0,0,2.631-5.18q0-5.591-8.88-6.5-8.469-.9-12.908-3.33t-4.44-8.51a11.513,11.513,0,0,1,4.343-9.332q4.344-3.575,11.31-3.575Zm47.08,15.375q0-3.289,4.111-3.782a6.4,6.4,0,0,0-2.765-4.522,10.358,10.358,0,0,0-6.066-1.644,10.983,10.983,0,0,0-9.162,4.522q-3.467,4.522-3.467,12,0,7.729,3.257,12.127a10.6,10.6,0,0,0,9.029,4.4A10.066,10.066,0,0,0,293.2-6.084a10.339,10.339,0,0,0,3.669-5.673q.825-2.878.989-3.289A2.866,2.866,0,0,1,300.5-16.69a3.132,3.132,0,0,1,2.309.9,3.114,3.114,0,0,1,.907,2.3A12.289,12.289,0,0,1,302.4-8.551a17.126,17.126,0,0,1-3.124,4.769A16.45,16.45,0,0,1,286.7,1.4a17.04,17.04,0,0,1-13.525-5.92q-5.139-5.92-5.139-15.539,0-10.2,5.3-16.32t14.1-6.125a16.667,16.667,0,0,1,10.935,3.577,11.25,11.25,0,0,1,4.358,9.085,7.45,7.45,0,0,1-1.685,5.015,5.422,5.422,0,0,1-4.316,1.973,4.88,4.88,0,0,1-3.412-1.233A3.949,3.949,0,0,1,291.958-27.132Zm53.36,28.2q-6.742,0-8.3-5.838-4.2,6.17-13.159,6.17-6.66,0-10.647-3.289a10.821,10.821,0,0,1-3.988-8.8,10.668,10.668,0,0,1,5.838-10.031,15.3,15.3,0,0,1,3.823-1.6q1.6-.37,6.454-.946,6.906-.74,9-2.055t2.1-4.851a6.5,6.5,0,0,0-2.343-5.3A9.994,9.994,0,0,0,327.56-37.4a12.562,12.562,0,0,0-6.906,2.055q-1.233.822-1.233,1.727,0,.329.74.822a3.2,3.2,0,0,1,1.151,2.8,3.485,3.485,0,0,1-1.192,2.713,4.327,4.327,0,0,1-3,1.069,4.786,4.786,0,0,1-3.577-1.48,4.994,4.994,0,0,1-1.439-3.618q0-4.6,4.563-7.893A18.408,18.408,0,0,1,327.725-42.5q14.964,0,14.964,14.357v16.573a35,35,0,0,0,.164,4.676q.493,2.871,2.8,2.871,2.878,0,2.878-5.226v-4q0-2.613,2.509-2.613,2.671,0,2.671,3.946v5.1q-.171,7.883-8.393,7.883ZM336.11-15.293V-21.13a10.518,10.518,0,0,1-3.808,2.3,38.05,38.05,0,0,1-7.165,1.151q-9.336.9-9.336,6.906a5.978,5.978,0,0,0,2.261,4.933,9.535,9.535,0,0,0,6.125,1.809q5.509,0,8.674-3a11.094,11.094,0,0,0,3.249-8.262ZM368.915-38.6v2.342a15.912,15.912,0,0,1,13.155-6.249,16.607,16.607,0,0,1,8.386,2.261,11.821,11.821,0,0,1,5.344,5.632,19.5,19.5,0,0,1,1.151,7.317v15.622q0,3.535.082,4.193.411,2.8,2.22,2.8a11.9,11.9,0,0,0,1.932-.206,11.544,11.544,0,0,1,1.685-.206,2.6,2.6,0,0,1,1.85.74,2.4,2.4,0,0,1,.781,1.809,2.568,2.568,0,0,1-.987,2.055,3.6,3.6,0,0,1-2.384.822A34.745,34.745,0,0,1,398.349,0a39.894,39.894,0,0,0-4.933-.329,31.218,31.218,0,0,0-3.535.164q-4.111.493-4.358.493-3.289,0-3.289-2.878,0-2.549,2.851-2.549a7.906,7.906,0,0,1,1.508.164A14.037,14.037,0,0,0,388.6-4.6q2.012,0,2.18-4.522V-24.583a29.054,29.054,0,0,0-.41-6,7.924,7.924,0,0,0-3.194-4.851,10.455,10.455,0,0,0-6.142-1.891q-6.553,0-9.419,4.686-1.966,3.207-1.966,10.935v10.935a16.3,16.3,0,0,0,.493,4.933,1.809,1.809,0,0,0,1.809,1.315,7.971,7.971,0,0,0,1.809-.288,8.131,8.131,0,0,1,1.891-.288q2.549,0,2.549,2.754,0,2.672-3.289,2.672-.658,0-4.275-.493a29.985,29.985,0,0,0-4.029-.247,42.638,42.638,0,0,0-4.6.329q-3.618.411-4.111.411-3.453,0-3.453-2.8a2.347,2.347,0,0,1,.682-1.986,2.347,2.347,0,0,1,2-.645,8.842,8.842,0,0,1,1.549.247,10.389,10.389,0,0,0,2.219.247q2.513,0,2.6-4.769V-31.325a10.476,10.476,0,0,0-.712-3.823,1.953,1.953,0,0,0-1.885-1.028,8.8,8.8,0,0,0-1.716.247,8.8,8.8,0,0,1-1.716.247q-3.015,0-3.015-2.672,0-2.754,3.7-2.754a3.459,3.459,0,0,1,.822.082l3.042.329a11.394,11.394,0,0,0,2.3-.206q2.138-.206,2.22-.206Q368.915-41.109,368.915-38.6Z" transform="translate(356.125 299.009)" fill="#21325b"/>
+            <g id="circle">
+              <g id="Group_3" data-name="Group 3">
+                <path id="Path_1" data-name="Path 1" d="M244.6,271.1a5.144,5.144,0,0,1,5.168-5.143l8.568.028a5.151,5.151,0,0,1,5.151,5.151v32.4c.965-.286,2.2-.591,3.559-.911a4.292,4.292,0,0,0,3.309-4.177V258.261a5.152,5.152,0,0,1,5.151-5.152H284.1a5.152,5.152,0,0,1,5.151,5.151v37.3s2.15-.87,4.243-1.754a4.3,4.3,0,0,0,2.625-3.957V245.383a5.151,5.151,0,0,1,5.15-5.151h8.585A5.151,5.151,0,0,1,315,245.383V282c7.443-5.394,14.986-11.882,20.972-19.683a8.646,8.646,0,0,0,1.316-8.072,60.636,60.636,0,1,0-109.855,50.108,7.668,7.668,0,0,0,7.316,3.79c1.624-.143,3.646-.345,6.05-.627a4.29,4.29,0,0,0,3.8-4.258V271.1" fill="#21325b"/>
+                <path id="Path_2" data-name="Path 2" d="M244.417,323.061A60.656,60.656,0,0,0,340.756,274c0-1.4-.065-2.778-.158-4.152-22.163,33.055-63.085,48.508-96.181,53.213" fill="#979695"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="powered-by">
+        <p>Daily price data is powered by:</p>
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 1101.64 196.79" style="enable-background:new 0 0 1101.64 196.79;" xml:space="preserve">
+        <path class="st0" d="M222.34,54.94c-40.02,0-71.29,30.38-71.29,71.05s30.48,70.79,71.29,70.79c40.81,0,71.82-30.64,71.82-71.05  C294.16,85.58,263.68,54.94,222.34,54.94z M222.61,167.47c-22.79,0-39.49-17.7-39.49-41.47c0-24.04,16.43-41.73,39.22-41.73  c23.06,0,39.75,17.96,39.75,41.73S245.4,167.47,222.61,167.47z M302.9,85.85h19.88v108.3h31.8V57.58H302.9V85.85z M71.02,84.26  c16.7,0,29.95,10.3,34.98,25.62h33.66c-6.1-32.75-33.13-54.94-68.37-54.94C31.27,54.94,0,85.32,0,126s30.48,70.79,71.29,70.79  c34.45,0,62.01-22.19,68.11-55.21H106c-4.77,15.32-18.02,25.89-34.72,25.89c-23.06,0-39.22-17.7-39.22-41.47  C32.07,101.96,47.97,84.26,71.02,84.26z M907.12,112.79l-23.32-3.43c-11.13-1.58-19.08-5.28-19.08-14  c0-9.51,10.34-14.26,24.38-14.26c15.37,0,25.18,6.6,27.3,17.43h30.74c-3.45-27.47-24.65-43.58-57.24-43.58  c-33.66,0-55.92,17.17-55.92,41.47c0,23.24,14.58,36.72,43.99,40.94l23.32,3.43c11.4,1.58,17.76,6.08,17.76,14.53  c0,10.83-11.13,15.32-26.5,15.32c-18.82,0-29.42-7.66-31.01-19.28h-31.27c2.92,26.68,23.85,45.43,62.01,45.43  c34.72,0,57.77-15.85,57.77-43.06C950.05,129.43,933.36,116.75,907.12,112.79z M338.68,1.32c-11.66,0-20.41,8.45-20.41,20.07  s8.74,20.07,20.41,20.07c11.66,0,20.41-8.45,20.41-20.07S350.34,1.32,338.68,1.32z M805.36,104.34c0-29.58-18.02-49.39-56.18-49.39  c-36.04,0-56.18,18.23-60.16,46.23h31.54c1.59-10.83,10.07-19.81,28.09-19.81c16.17,0,24.12,7.13,24.12,15.85  c0,11.36-14.58,14.26-32.6,16.11c-24.38,2.64-54.59,11.09-54.59,42.79c0,24.57,18.29,40.41,47.44,40.41  c22.79,0,37.1-9.51,44.26-24.57c1.06,13.47,11.13,22.19,25.18,22.19h18.55v-28.26h-15.64V104.34z M774.09,138.68  c0,18.23-15.9,31.7-35.25,31.7c-11.93,0-22-5.02-22-15.58c0-13.47,16.17-17.17,31.01-18.75c14.31-1.32,22.26-4.49,26.24-10.57  V138.68z M605.28,54.94c-17.76,0-32.6,7.4-43.2,19.81V0h-31.8v194.15h31.27v-17.96c10.6,12.94,25.71,20.6,43.73,20.6  c38.16,0,67.05-30.11,67.05-70.79S642.91,54.94,605.28,54.94z M600.51,167.47c-22.79,0-39.49-17.7-39.49-41.47  s16.96-41.73,39.75-41.73c23.06,0,39.22,17.7,39.22,41.73C639.99,149.77,623.3,167.47,600.51,167.47z M454.22,54.94  c-20.67,0-34.19,8.45-42.14,20.34v-17.7h-31.54v136.56h31.8v-74.22c0-20.87,13.25-35.66,32.86-35.66c18.29,0,29.68,12.94,29.68,31.7  v78.19h31.8v-80.56C506.69,79.24,488.94,54.94,454.22,54.94z M1101.64,121.51c0-39.09-28.62-66.56-67.05-66.56  c-40.81,0-70.76,30.64-70.76,71.05c0,42.53,32.07,70.79,71.29,70.79c33.13,0,59.1-19.55,65.72-47.28h-33.13  c-4.77,12.15-16.43,19.02-32.07,19.02c-20.41,0-35.78-12.68-39.22-34.87h105.21V121.51z M998.28,110.94  c5.04-19.02,19.35-28.26,35.78-28.26c18.02,0,31.8,10.3,34.98,28.26H998.28z"/>
+        </svg>
+      </div>
+    </div>
 </template>
 
 <script>
@@ -118,6 +142,11 @@ export default {
     },
   },
   methods: {
+    test() {
+      this.wallet = '0xC8a65Fadf0e0dDAf421F28FEAb69Bf6E2E589963'
+      this.year = '2021'
+      this.report = 'txlist'
+    },
     async fetchWalletTxns() {
       this.noResults = false;
       this.isLoading = true;
@@ -143,13 +172,22 @@ export default {
       return array[0]
     },
     getGasETH(gasUsed, gasPrice) {
-      return (gasUsed/1000000000) * (gasPrice/1000000000);      
+      const number = (gasUsed/1000000000) * (gasPrice/1000000000);
+      return number.toFixed(10);
     },
     fromETHtoUSD(eth, spotRate) {
       return formatter.format(eth * spotRate);
     },
     convertGweitoETH(gwei) {
-      return gwei/1000000000000000000;
+      const number = gwei/1000000000000000000;
+      if (number < 0.0000000001) {
+        return 0.00
+      } else {
+        return number.toFixed(10);
+      } 
+    },
+    formatUSD(usd) {
+      return formatter.format(usd);
     },
     linkToEtherscanTx(hash) {
       return "https://etherscan.io/tx/" + hash.toString();
@@ -163,24 +201,27 @@ export default {
 
 
 <style scoped>
+/* General Style */
+* {
+  margin: 0;
+  padding: 0;
+  font-size: 1.1rem;
+}
+
 h2 {
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 p {
   margin: 0;
   padding: 0;
 }
 a {
-  text-decoration: none;
   color: rgb(38, 67, 119);
 }
-.underline-font {
-  text-decoration: underline;
-}
-.card-header {
-  font-weight: 400;
+li {
   margin: 0;
   padding: 0;
+  text-align: left;
 }
 ul {
   list-style-type: none;
@@ -188,6 +229,34 @@ ul {
   width: fit-content;
   font-size: 1.25rem;
 }
+.strong-font {
+  font-weight: 600;
+  font-size: inherit;
+}
+.divider {
+  font-size: 2rem;
+  margin: 0;
+  padding: 0 2rem;
+  line-height: 0.5rem;
+}
+
+
+
+/* Landing Page */
+
+h1 {
+  font-size: 2.5rem;
+  border-top-left-radius: 5rem;
+  border-top-right-radius: 5rem;
+  background-image: linear-gradient( 135deg, #f19c1c 10%, #f7e492 100%);
+}
+
+
+
+
+
+
+/* User Guide */
 .user-guide-list {
   margin-left: 2rem;
   padding-left: 1rem;
@@ -195,39 +264,63 @@ ul {
   font-size: 1.15rem;
   line-height: 1.25rem;
 }
-li {
-  margin: 0;
-  padding: 0;
-  text-align: left;
+.summary-container,
+.instructions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
-select, option, label, input {
-  font-size: 1.2rem;
+.instructions {
+  background-color: rgba(255,255,255,0.5);
 }
-.txn-card {
-  display: relative;
-  font-size: 1rem;
-  border: 1px solid black;
-  font-family: 'News Cycle', sans-serif;
+.summary-container {
   margin-bottom: 2rem;
 }
-.txn-card ul {
-  padding: 1rem;
+.instructions {
+  padding: 1rem 0;
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
 }
-.txn-card ul li {
-  padding: 0.15rem;
+.powered-by {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
 }
-.strong-font {
-  font-weight: 600;
+.powered-by-group {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid black;
+  background-image: linear-gradient( 135deg, #f19c1c 10%, #f7e492 100%);
+  border-bottom-left-radius: 5rem;
+  border-bottom-right-radius: 5rem;
+}
+.st0{fill:#0052FF;}
+
+
+/* Search Box */
+select, option, label, input {
+  font-size: 1.05rem;
+  border-radius: 1rem;
+  transition: border-radius 1s ease-in-out;
+  padding: 0.3rem 1rem;
+}
+input[type=text]:focus {
+  background-color: white;
+  border-radius: 0rem;
+  transition: border-radius 1s ease-in-out;
 }
 .search-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  background-color: rgba(255,255,255,0.5);
+  padding: 2rem;
 }
 .loading {
-  margin-top: 5rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  background-color: rgba(255,255,255,0.5);
 }
 .search-input {
   display: flex;
@@ -235,23 +328,102 @@ select, option, label, input {
 }
 .search-input label {
   padding: 0 0.5rem;
+  font-weight: 600;
 }
-.search-button {
+.search-button,
+.test-button {
   margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+
+
+/* Transaction List */
+.card-header {
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+} 
+.txn-card {
+  display: relative;
+  font-size: 1rem;
+  border: 1px solid black;
+  background-color: rgba(108, 152, 219, 0.5);
+  font-family: 'News Cycle', sans-serif;
+  margin-bottom: 2rem;
+  border-radius: 1.5rem;
+  border-top-left-radius: 0rem;
+}
+.txn-card ul {
+  padding: 1rem;
+}
+.txn-card ul li {
+  padding: 0.15rem;
 }
 .list-container {
   display: flex;
   justify-content: center;
+  background-color: rgba(255,255,255,0.5)
 }
-.summary-container,
-.instructions {
-  display: flex;
-  justify-content: center;
+.gas-module {
+  display: block;
+  width: fit-content;
+  text-align: center;
+  margin: -8rem 0 1rem 72%;
+  padding: 0.8rem 0.5rem;
+  background-color: rgba(255,255,255,0.60);
+  border-radius: 2rem;
 }
-.instructions {
-  padding: 2rem 0;
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
-  margin-bottom: 1rem;
+
+@media screen and (max-width: 700px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p {
+    font-size: 70%;
+  }
+  a {
+    font-size: 100%;
+  }
+  .user-guide-list {
+    margin: 0 1rem;
+  }
+  .user-guide-list li {
+    font-size: 75%;
+  }
+  .card-header {
+    font-size: 60%;
+  }
+  .txn-list-header {
+    font-size: 75%;
+  }
+  .divider {
+    padding: 0 1rem;
+  }
+  .txn-card ul {
+    padding: 0.5rem 0.25rem 1rem 0.25rem;
+  }
+  .strong-font {
+    font-size: 80%;
+  }
+  .txn-card ul li {
+    font-size: 60%;
+    padding: 0.1rem 0;
+    margin: 0;
+  }
+  .gas-module {
+  margin: -5.5rem 0.15rem 1rem 70%;
+  padding: 0.5rem 0.1rem;
+  background-color: rgba(255,255,255,0.60);
+  border-radius: 2rem;
+  }
+  .gas-module h3 {
+    margin-top: -0.2rem;
+  }
+  .powered-by {
+  margin-top: 1rem;
+  padding: 0.5rem 0.7rem;
 }
+}
+
 </style>
