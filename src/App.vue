@@ -39,7 +39,7 @@ html {
 
 @media screen and (max-width: 700px) {
   #app {
-    margin: 0.5rem 1%;
+    margin: 1.5rem 1%;
   }
 }
 </style>

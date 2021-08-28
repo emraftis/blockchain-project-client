@@ -3,12 +3,12 @@
   <div class="landing-page">
     <h1>Ethereum Gas Tracker</h1>
     <div class="instructions">
-    <h2>User Guide:</h2>
+    <h2 class="user-guide">User Guide:</h2>
     <ul class="user-guide-list">
-      <li>This application shows accumulated Gas Fees for a wallet address.</li>
+      <li>This application shows the accumulated Gas Fees for a wallet address.</li>
       <li>Please enter the year and a <span class="strong-font">public, non-custodial</span> wallet address that you want to search.</li>
       <li>Transactions that show a value of '0 ETH' are usually ERC20 token transactions.</li>
-      <li>Find out more about the '0 ETH Transactions' by changing the Report Type or clicking on the Tx Hash link.</li>
+      <li>Find out more about '0 ETH Transactions' by changing the Report Type or clicking on the Tx Hash link.</li>
       <li>Want to test it? Try the <a target="_blank" href="https://www.coindesk.com/markets/2021/08/10/cross-chain-defi-site-poly-network-hacked-hundreds-of-millions-potentially-lost/">PolyNetwork Hacker's wallet:</a> 0xC8a65Fadf0e0dDAf421F28FEAb69Bf6E2E589963</li>
       <button class="test-button" @click="test">Test It</button>
     </ul>
@@ -258,11 +258,14 @@ h1 {
 
 /* User Guide */
 .user-guide-list {
-  margin-left: 2rem;
-  padding-left: 1rem;
+  margin: 0rem 2rem;
+  padding: 0rem 1rem;
   list-style-type: style;
   font-size: 1.15rem;
   line-height: 1.25rem;
+}
+.user-guide {
+  font-size: 1.6rem;
 }
 .summary-container,
 .instructions {
@@ -387,9 +390,13 @@ input[type=text]:focus {
   }
   .user-guide-list {
     margin: 0 1rem;
+    padding: 0 1rem;
   }
   .user-guide-list li {
     font-size: 75%;
+  }
+  .user-guide {
+    font-size: 1.4rem;
   }
   .card-header {
     font-size: 60%;
@@ -423,7 +430,14 @@ input[type=text]:focus {
   .powered-by {
   margin-top: 1rem;
   padding: 0.5rem 0.7rem;
-}
+  }
+  .search-input {
+    display: flex;
+    flex-direction: column;
+  }
+  .search-box {
+    padding: 0.5rem 2rem;
+  }
 }
 
 </style>
