@@ -42,4 +42,16 @@ html {
     margin: 1.5rem 1%;
   }
 }
+
+@media screen and (min-width: 701px) {
+  #app {
+    margin: 1.5rem 10%;
+  }
+}
+
+@media screen and (min-width: 1090px) {
+  #app {
+    margin: 3rem 15%;
+  }
+}
 </style>

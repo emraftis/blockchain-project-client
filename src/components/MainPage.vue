@@ -6,7 +6,7 @@
     <h2 class="user-guide">User Guide:</h2>
     <ul class="user-guide-list">
       <li>This application shows the accumulated Gas Fees for a wallet address.</li>
-      <li>Please enter the year and a <span class="strong-font">public, non-custodial</span> wallet address that you want to search.</li>
+      <li>Please enter the year and a <span class="important">public, non-custodial</span> wallet address that you want to search.</li>
       <li>Transactions that show a value of '0 ETH' are usually ERC20 token transactions.</li>
       <li>Find out more about '0 ETH Transactions' by changing the Report Type or clicking on the Tx Hash link.</li>
       <li>Want to test it? Try the <a target="_blank" href="https://www.coindesk.com/markets/2021/08/10/cross-chain-defi-site-poly-network-hacked-hundreds-of-millions-potentially-lost/">PolyNetwork Hacker's wallet:</a> 0xC8a65Fadf0e0dDAf421F28FEAb69Bf6E2E589963</li>
@@ -229,7 +229,7 @@ ul {
   width: fit-content;
   font-size: 1.25rem;
 }
-.strong-font {
+.strong-font, .important {
   font-weight: 600;
   font-size: inherit;
 }
@@ -296,6 +296,7 @@ h1 {
   background-image: linear-gradient( 135deg, #f19c1c 10%, #f7e492 100%);
   border-bottom-left-radius: 5rem;
   border-bottom-right-radius: 5rem;
+  padding-bottom: 1rem;
 }
 .st0{fill:#0052FF;}
 
@@ -380,7 +381,10 @@ input[type=text]:focus {
 
 @media screen and (max-width: 700px) {
   h1 {
-    font-size: 2rem;
+    font-size: 1.6rem;
+  }
+  h2 {
+    font-size: 90%
   }
   p {
     font-size: 70%;
@@ -393,7 +397,7 @@ input[type=text]:focus {
     padding: 0 1rem;
   }
   .user-guide-list li {
-    font-size: 75%;
+    font-size: 70%;
   }
   .user-guide {
     font-size: 1.4rem;
@@ -402,7 +406,7 @@ input[type=text]:focus {
     font-size: 60%;
   }
   .txn-list-header {
-    font-size: 75%;
+    font-size: 68%;
   }
   .divider {
     padding: 0 1rem;
@@ -412,6 +416,9 @@ input[type=text]:focus {
   }
   .strong-font {
     font-size: 80%;
+  }
+  .important {
+    font-size: 100%;
   }
   .txn-card ul li {
     font-size: 60%;
